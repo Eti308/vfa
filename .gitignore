@@ -1,0 +1,8 @@
+target/
+*.nx
+!tests/fixtures/**/*.nx
+/bench_out/
+apps/web/dist/
+fuzz/corpus/
+fuzz/artifacts/
+fuzz_crash_*.nx

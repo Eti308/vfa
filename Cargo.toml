@@ -1,0 +1,29 @@
+[package]
+name = "vfa"
+version = "0.1.0"
+edition = "2021"
+description = "VFA (Variable Float Audio): lossless, bit-exact compression of IEEE-754 float32 audio"
+license = "MIT OR Apache-2.0"
+
+[lib]
+name = "vfa"
+path = "src/lib.rs"
+
+[[bin]]
+name = "vfa"
+path = "src/main.rs"
+
+[dependencies]
+crc32fast = "1"
+
+[dev-dependencies]
+proptest = "1"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+debug = false
+
+[profile.test]
+opt-level = 2

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VFA Encoder</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a84ff'/%3E%3Cpath d='M10 32h6l4-12 6 26 6-34 6 30 5-18 4 8h7' fill='none' stroke='white' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>/*CSS*/</style>
+</head>
+<body>
+<header class="titlebar">
+  <div class="brand">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#0a84ff"/><path d="M10 32h6l4-12 6 26 6-34 6 30 5-18 4 8h7" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <div><h1>VFA Encoder</h1><span>Lossless, bit-exact float audio · .wav ⇄ .nx</span></div>
+  </div>
+  <div><button id="openBtn" class="btn">Open…</button><input type="file" id="fileInput" accept=".wav,.wave,.nx" hidden></div>
+</header>
+
+<main>
+  <section id="drop" class="drop">
+    <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 31V9m0 0-8 8m8-8 8 8"/><path d="M8 29v8a3 3 0 0 0 3 3h26a3 3 0 0 0 3-3v-8"/></svg>
+    <strong>Drop a .wav or .nx file here</strong>
+    <div>WAV (float32, or 8/16/24-bit) is encoded to .nx · .nx is decoded to WAV · both can be played</div>
+    <div style="margin-top:14px"><button id="chooseBtn" class="btn">Choose File…</button></div>
+  </section>
+
+  <section id="fileCard" class="card hidden">
+    <div class="file-head">
+      <div id="fileIcon" class="file-icon">WAV</div>
+      <div class="file-meta">
+        <div id="fileName" class="file-name"></div>
+        <div id="fileDetails" class="muted"></div>
+      </div>
+      <button id="closeFile" class="icon-btn" title="Close file" aria-label="Close file">✕</button>
+    </div>
+    <div class="player" id="player">
+      <canvas id="wave" class="wave" aria-label="Waveform — click to seek"></canvas>
+      <div class="scrub">
+        <span id="tElapsed">0:00.0</span>
+        <input id="seek" type="range" min="0" max="1000" step="1" value="0" aria-label="Position">
+        <span id="tRemain">-0:00.0</span>
+      </div>
+      <div class="transport">
+        <div><button id="loopBtn" class="hud-btn" title="Loop" aria-label="Loop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></button></div>
+        <div class="center">
+          <button id="back10" class="hud-btn" title="Back 10 seconds (←)" aria-label="Back 10 seconds"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2.5 12 11 6zm9.5 0v12L12 12l8.5-6z"/></svg></button>
+          <button id="playBtn" class="hud-btn play" title="Play (space)" aria-label="Play"><svg id="playIcon" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+          <button id="fwd10" class="hud-btn" title="Forward 10 seconds (→)" aria-label="Forward 10 seconds"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l8.5-6L13 6zM3.5 6v12L12 12 3.5 6z"/></svg></button>
+        </div>
+        <div class="right">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true" style="opacity:.75"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="volume" class="vol" type="range" min="0" max="1" step="0.01" value="0.85" aria-label="Volume">
+        </div>
+      </div>
+      <div class="player-note">
+        <label title="Playback only — the file is never changed"><input type="checkbox" id="normalize"> Normalize for listening</label>
+        <span id="peakInfo"></span>
+      </div>
+      <div id="playerLoading" class="player-loading hidden">Preparing audio…</div>
+    </div>
+  </section>
+
+  <section id="encoderPanel" class="card hidden">
+    <div class="card-head"><h2>Encode to .nx</h2><span class="muted" id="encHint"></span></div>
+    <div class="level-row">
+      <input id="level" type="range" min="0" max="8" step="1" value="5" aria-label="Compression level">
+      <div class="level-value" id="levelValue">5</div>
+      <div class="labels"><span>0 · fastest</span><span>5 · default</span><span>8 · smallest</span></div>
+      <div class="level-desc" id="levelDesc"></div>
+    </div>
+    <div class="toggles">
+      <label class="toggle"><input type="checkbox" id="optStereo" checked><span>Stereo decorrelation<small>left/side, side/right, mid/side</small></span></label>
+      <label class="toggle"><input type="checkbox" id="optInter" checked><span>Inter-channel prediction<small>multichannel, dual mono, polarity</small></span></label>
+      <label class="toggle"><input type="checkbox" id="optAdaptive" checked><span>Adaptive block sizes<small>256–8192 frames, chosen per signal</small></span></label>
+      <label class="toggle"><input type="checkbox" id="optHeader" checked><span>Keep original WAV header<small>decode gives a byte-identical file</small></span></label>
+      <label class="toggle"><input type="checkbox" id="optVerify" checked><span>Verify after encoding<small>decode again and compare every bit</small></span></label>
+    </div>
+    <details class="advanced" id="advanced">
+      <summary>Advanced options</summary>
+      <div class="adv-grid">
+        <label>Block size (max)
+          <select id="optBlock"><option value="auto">automatic</option><option>512</option><option>1024</option><option>2048</option><option>4096</option><option>8192</option><option>16384</option><option>32768</option></select>
+        </label>
+        <label>Smallest adaptive block
+          <select id="optMinBlock"><option>64</option><option>128</option><option selected>256</option><option>512</option><option>1024</option><option>2048</option></select>
+        </label>
+        <label>Seek index
+          <select id="optIndex"><option value="compact">compact (default)</option><option value="legacy">legacy (fixed blocks only)</option><option value="none">none</option></select>
+        </label>
+        <label>Extra entropy coders
+          <span class="checks"><label><input type="checkbox" data-coder="huffman">Huffman</label><label><input type="checkbox" data-coder="rans">rANS</label><label><input type="checkbox" data-coder="range">Range</label></span>
+        </label>
+        <label>Modes
+          <span class="checks"><label><input type="checkbox" data-mode="xorchimp" checked>XOR</label><label><input type="checkbox" data-mode="rle" checked>RLE</label><label><input type="checkbox" data-mode="fieldvlc" checked>FieldVlc</label><label><input type="checkbox" data-mode="xorlz" checked>Gorilla</label></span>
+        </label>
+      </div>
+    </details>
+    <div class="actions-row">
+      <div class="cmd-preview mono" id="encPreview"></div>
+      <button id="encodeBtn" class="btn primary">Encode to .nx</button>
+    </div>
+  </section>
+
+  <section id="decoderPanel" class="card hidden">
+    <div class="card-head"><h2>Decode to .wav</h2><span class="muted" id="decHint"></span></div>
+    <div class="excerpt">
+      <span>Optional excerpt:</span>
+      <label>from <input type="number" id="exStart" min="0" step="0.1" placeholder="0"> s</label>
+      <label>length <input type="number" id="exDur" min="0" step="0.1" placeholder="all"> s</label>
+    </div>
+    <div class="actions-row">
+      <div class="cmd-preview mono" id="decPreview"></div>
+      <button id="decodeBtn" class="btn primary">Decode to .wav</button>
+    </div>
+  </section>
+
+  <section id="progress" class="card hidden">
+    <div class="progress-top"><strong id="progTitle">Working…</strong><button id="cancelBtn" class="btn">Cancel</button></div>
+    <div class="bar"><div id="progBar"></div></div>
+    <div class="muted" id="progText"></div>
+  </section>
+
+  <section id="result" class="card hidden"></section>
+
+  <section class="card console" aria-label="Command line">
+    <div class="console-log" id="log"></div>
+    <div class="console-line">
+      <span class="prompt">vfa ❯</span>
+      <input id="cmd" spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="Command line" placeholder="--level 8 --no-stereo    ·  encode · decode · play · info · help">
+    </div>
+    <div class="console-status" id="cmdStatus"></div>
+  </section>
+</main>
+<footer>Everything runs locally on this Mac — no upload. Files are never modified; playback normalization affects listening only.</footer>
+
+<script id="worker-src" type="text/plain">/*WORKER_JS*/</script>
+<script>const WASM_B64 = "/*WASM_B64*/";</script>
+<script>/*APP_JS*/</script>
+</body>
+</html>

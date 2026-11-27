@@ -1,0 +1,22 @@
+[package]
+name = "vfa-wasm"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "WebAssembly build of the VFA codec for the desktop app"
+
+[lib]
+crate-type = ["cdylib"]
+path = "src/lib.rs"
+
+[dependencies]
+vfa = { path = "../.." }
+
+# standalone (not part of a parent workspace)
+[workspace]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
