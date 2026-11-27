@@ -1,7 +1,11 @@
 # VFA — Variable Float Audio (prototype)
 
 Lossless, **bit-exact** compression of IEEE-754 float32 audio, written in
-Rust. File extension `.nx`; format version 1.1, which also reads 1.0 files.
+Rust.
+
+**⬇ Mac app: [download VFA-mac.zip](https://github.com/Eti308/vfa/raw/main/download/VFA-mac.zip)**
+(encoder, decoder and player; unzip and open *VFA Encoder.app* or *VFA.html*,
+see [Desktop app](#desktop-app-macos)). File extension `.nx`; format version 1.1, which also reads 1.0 files.
 
 * Every one of the 2^32 float32 bit patterns round-trips exactly: ±0,
   subnormals, ±Inf and every NaN payload.
@@ -58,7 +62,7 @@ Details:
 
 ## Desktop app (macOS)
 
-`apps/web/dist/VFA-mac.zip` contains **VFA Encoder.app** and a standalone
+[`download/VFA-mac.zip`](https://github.com/Eti308/vfa/raw/main/download/VFA-mac.zip) (built from `apps/web/` into `apps/web/dist/`) contains **VFA Encoder.app** and a standalone
 **VFA.html**. Unzip it on a Mac and double-click either one. The app:
 
 * encodes WAV (float32, or exactly converted 8/16/24-bit) → .nx with level
